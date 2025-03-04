@@ -1,18 +1,28 @@
-# Use an official OpenJDK runtime as a parent image
-FROM openjdk:17-jdk-slim as build
+# Use Maven with JDK 21 for the build stage
+FROM maven:3.9.6-eclipse-temurin-21 as build
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy the pom.xml and the source code into the container
+# Copy the POM file and download dependencies first (improves caching)
 COPY pom.xml .
+RUN mvn dependency:go-offline
+
+# Copy the source code
 COPY src ./src
 
-# Build the project using Maven
-RUN mvn clean install -DskipTests
+# Build the project
+RUN mvn clean package -DskipTests
 
-# Expose the port on which the app will run
+# Use a smaller JDK image for runtime
+FROM openjdk:21-jdk-slim as runtime
+
+WORKDIR /app
+
+# Copy the built JAR from the build stage
+COPY --from=build /app/target/shop-0.0.1-SNAPSHOT.jar shop-0.0.1-SNAPSHOT.jar
+
+# Expose port
 EXPOSE 8080
 
-# Run the Spring Boot application
-CMD ["java", "-jar", "target/your-app.jar"]
+# Run the application
+CMD ["java", "-jar", "/app/shop-0.0.1-SNAPSHOT.jar"]
