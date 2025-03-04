@@ -71,6 +71,8 @@ public class ProductService {
                 .name(productEntity.getName())
                 .description(productEntity.getDescription())
                 .price(productEntity.getPrice())
+                .createdAt(productEntity.getCreatedAt())
+                .updatedAt(productEntity.getUpdatedAt())
                 .build();
     }
 
